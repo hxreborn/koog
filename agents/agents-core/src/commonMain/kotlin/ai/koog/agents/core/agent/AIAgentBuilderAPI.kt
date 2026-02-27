@@ -1,5 +1,7 @@
 package ai.koog.agents.core.agent
 
+import ai.koog.agents.core.agent.cli.AIAgentCliStrategy
+import ai.koog.agents.core.agent.cli.AIAgentCliStrategyBuilder
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.entity.AIAgentGraphStrategy
 import ai.koog.agents.core.feature.AIAgentGraphFeature
@@ -112,6 +114,30 @@ public interface AIAgentBuilderAPI {
         name: String,
         buildStrategy: BuilderChainAction<AIAgentPlannerStrategyBuilder, TypedAgentPlannerStrategyBuilder<Input, Output>>
     ): PlannerAgentBuilder<Input, Output>
+
+    /**
+     * Configures the CLI strategy to be used by the AI agent.
+     *
+     * @param Input The input type that the agent processes.
+     * @param Output The output type that the agent produces.
+     * @param strategy The CLI strategy used by the agent for processing input and generating results.
+     * @return A [CliAgentBuilder] instance configured with the specified strategy.
+     */
+    public fun <Input, Output> cliStrategy(
+        strategy: AIAgentCliStrategy<Input, Output>
+    ): CliAgentBuilder<Input, Output>
+
+    /**
+     * Configures the CLI strategy by its name.
+     *
+     * @param name The name of the CLI strategy.
+     * @param buildStrategy A builder action to configure the CLI strategy.
+     * @return A [CliAgentBuilder] instance configured with the built CLI strategy.
+     */
+    public fun <Input, Output> cliStrategy(
+        name: String,
+        buildStrategy: BuilderChainAction<AIAgentCliStrategyBuilder, AIAgentCliStrategy<Input, Output>>
+    ): CliAgentBuilder<Input, Output>
 
     /**
      * Sets the identifier for the builder configuration.

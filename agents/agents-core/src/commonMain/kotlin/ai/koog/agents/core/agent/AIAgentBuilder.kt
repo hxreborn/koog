@@ -3,6 +3,8 @@
 package ai.koog.agents.core.agent
 
 import ai.koog.agents.core.agent.GraphAIAgent.FeatureContext
+import ai.koog.agents.core.agent.cli.AIAgentCliStrategy
+import ai.koog.agents.core.agent.cli.AIAgentCliStrategyBuilder
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.config.MissingToolsConversionStrategy
 import ai.koog.agents.core.agent.config.ToolCallDescriber
@@ -155,6 +157,15 @@ public expect class AIAgentBuilder internal constructor() : AIAgentBuilderAPI {
         name: String,
         buildStrategy: BuilderChainAction<AIAgentPlannerStrategyBuilder, TypedAgentPlannerStrategyBuilder<Input, Output>>
     ): PlannerAgentBuilder<Input, Output>
+
+    public override fun <Input, Output> cliStrategy(
+        strategy: AIAgentCliStrategy<Input, Output>
+    ): CliAgentBuilder<Input, Output>
+
+    public override fun <Input, Output> cliStrategy(
+        name: String,
+        buildStrategy: BuilderChainAction<AIAgentCliStrategyBuilder, AIAgentCliStrategy<Input, Output>>
+    ): CliAgentBuilder<Input, Output>
 
     public override fun id(id: String?): AIAgentBuilder
 
@@ -736,6 +747,128 @@ public class PlannerAgentBuilder<Input, Output>(
             strategy = strategy,
             promptExecutor = requireNotNull(promptExecutor) { "promptExecutor must be set" },
             toolRegistry = toolRegistry,
+            id = id,
+            agentConfig = AIAgentConfig(
+                prompt = prompt ?: Prompt.Empty,
+                model = requireNotNull(llmModel) { "llmModel must be set" },
+                maxAgentIterations = maxIterations,
+            ),
+            clock = clock
+        ) {
+            featureInstallers.forEach { install ->
+                install()
+            }
+        }
+    }
+}
+
+/**
+ * A builder class for creating instances of [CliAIAgent]. This builder provides a fluent interface
+ * to configure various parameters and components required to construct a CLI-based AI agent.
+ *
+ * @param Input The input type that the agent processes.
+ * @param Output The output type that the agent produces.
+ * @property strategy The CLI execution strategy used by the agent for processing input and generating results.
+ */
+public class CliAgentBuilder<Input, Output>(
+    private val strategy: AIAgentCliStrategy<Input, Output>,
+    private var id: String? = null,
+    private var prompt: Prompt? = Prompt.Empty,
+    private var llmModel: LLModel? = null,
+    private var maxIterations: Int = 50,
+    private var clock: Clock = kotlin.time.Clock.System,
+    private var featureInstallers: MutableList<CliAIAgent.FeatureContext.() -> Unit> = mutableListOf(),
+) {
+    /**
+     * Sets the Large Language Model (LLM) to be used by the [CliAgentBuilder].
+     *
+     * @param model The instance of [LLModel] representing the Large Language Model to be configured.
+     * @return The current instance of [CliAgentBuilder] for method chaining.
+     */
+    public fun llmModel(model: LLModel): CliAgentBuilder<Input, Output> = apply {
+        this.llmModel = model
+    }
+
+    /**
+     * Sets the identifier for the [CliAgentBuilder] and returns the updated builder instance.
+     *
+     * @param id The identifier to be set. It can be null.
+     * @return The updated [CliAgentBuilder] instance for chaining further configurations.
+     */
+    public fun id(id: String?): CliAgentBuilder<Input, Output> = apply {
+        this.id = id
+    }
+
+    /**
+     * Configures the system prompt for the CLI agent.
+     *
+     * @param systemPrompt The content of the system prompt to set.
+     * @return The current instance of the [CliAgentBuilder] with the specified system prompt applied.
+     */
+    public fun systemPrompt(systemPrompt: String): CliAgentBuilder<Input, Output> = apply {
+        this.prompt = ai.koog.prompt.dsl.prompt(id = "agent") { system(systemPrompt) }
+    }
+
+    /**
+     * Sets the prompt to be used by the builder and updates the internal state accordingly.
+     *
+     * @param prompt The prompt to be used by the [CliAgentBuilder].
+     * @return The current instance of [CliAgentBuilder] with the updated prompt.
+     */
+    public fun prompt(prompt: Prompt): CliAgentBuilder<Input, Output> = apply {
+        this.prompt = prompt
+    }
+
+    /**
+     * Sets the maximum number of iterations for the CLI agent.
+     *
+     * @param maxIterations The maximum number of iterations the agent is allowed to perform.
+     * @return The updated instance of the [CliAgentBuilder] with the specified maximum iterations.
+     */
+    public fun maxIterations(maxIterations: Int): CliAgentBuilder<Input, Output> = apply {
+        this.maxIterations = maxIterations
+    }
+
+    /**
+     * Configures the agent with the specified AI agent configuration.
+     *
+     * @param config The configuration object that contains settings for the AI agent.
+     * @return The updated instance of [CliAgentBuilder] with the applied configuration.
+     */
+    public fun agentConfig(config: AIAgentConfig): CliAgentBuilder<Input, Output> = apply {
+        this.prompt = config.prompt
+        this.llmModel = config.model
+        this.maxIterations = config.maxAgentIterations
+    }
+
+    /**
+     * Installs a functional feature into the [CliAgentBuilder] with the specified configuration.
+     *
+     * @param feature The functional feature to be installed.
+     * @param configure A lambda or action responsible for configuring the provided feature.
+     * @return The current instance of [CliAgentBuilder] with the feature installed.
+     */
+    public fun <TConfig : FeatureConfig> install(
+        feature: AIAgentFunctionalFeature<TConfig, *>,
+        configure: ConfigureAction<TConfig>
+    ): CliAgentBuilder<Input, Output> = apply {
+        this.featureInstallers += {
+            install(feature) {
+                configure.configure(this)
+            }
+        }
+    }
+
+    /**
+     * Builds and returns an instance of [CliAIAgent] configured using the parameters
+     * provided to the [CliAgentBuilder].
+     *
+     * @return An instance of [CliAIAgent] initialized with the specified input and output types,
+     *         strategy, model configuration, and other settings.
+     */
+    public fun build(): CliAIAgent<Input, Output> {
+        return CliAIAgent(
+            strategy = strategy,
             id = id,
             agentConfig = AIAgentConfig(
                 prompt = prompt ?: Prompt.Empty,

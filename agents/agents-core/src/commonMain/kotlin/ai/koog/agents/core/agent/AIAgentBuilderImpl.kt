@@ -1,5 +1,7 @@
 package ai.koog.agents.core.agent
 
+import ai.koog.agents.core.agent.cli.AIAgentCliStrategy
+import ai.koog.agents.core.agent.cli.AIAgentCliStrategyBuilder
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.config.MissingToolsConversionStrategy
 import ai.koog.agents.core.agent.config.ToolCallDescriber
@@ -117,6 +119,24 @@ internal class AIAgentBuilderImpl internal constructor() : AIAgentBuilderAPI {
         buildStrategy: BuilderChainAction<AIAgentPlannerStrategyBuilder, TypedAgentPlannerStrategyBuilder<Input, Output>>
     ): PlannerAgentBuilder<Input, Output> = plannerStrategy(
         buildStrategy.configure(AIAgentPlannerStrategyBuilder(name)).build()
+    )
+
+    public override fun <Input, Output> cliStrategy(
+        strategy: AIAgentCliStrategy<Input, Output>
+    ): CliAgentBuilder<Input, Output> = CliAgentBuilder(
+        strategy = strategy,
+        id = this.id,
+        prompt = this.prompt,
+        llmModel = this.llmModel,
+        maxIterations = this.maxIterations,
+        clock = this.clock
+    )
+
+    public override fun <Input, Output> cliStrategy(
+        name: String,
+        buildStrategy: BuilderChainAction<AIAgentCliStrategyBuilder, AIAgentCliStrategy<Input, Output>>
+    ): CliAgentBuilder<Input, Output> = cliStrategy(
+        buildStrategy.configure(AIAgentCliStrategyBuilder(name))
     )
 
     public override fun id(id: String?): AIAgentBuilderAPI = apply {

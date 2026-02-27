@@ -3,6 +3,8 @@
 package ai.koog.agents.core.agent
 
 import ai.koog.agents.annotations.JavaAPI
+import ai.koog.agents.core.agent.cli.AIAgentCliStrategy
+import ai.koog.agents.core.agent.cli.AIAgentCliStrategyBuilder
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.agent.config.MissingToolsConversionStrategy
 import ai.koog.agents.core.agent.context.AIAgentFunctionalContext
@@ -118,6 +120,15 @@ public actual class AIAgentBuilder internal actual constructor() : AIAgentBuilde
         name: String,
         buildStrategy: BuilderChainAction<AIAgentPlannerStrategyBuilder, TypedAgentPlannerStrategyBuilder<Input, Output>>
     ): PlannerAgentBuilder<Input, Output> = delegate.plannerStrategy(name, buildStrategy)
+
+    public actual override fun <Input, Output> cliStrategy(
+        strategy: AIAgentCliStrategy<Input, Output>
+    ): CliAgentBuilder<Input, Output> = delegate.cliStrategy(strategy)
+
+    public actual override fun <Input, Output> cliStrategy(
+        name: String,
+        buildStrategy: BuilderChainAction<AIAgentCliStrategyBuilder, AIAgentCliStrategy<Input, Output>>
+    ): CliAgentBuilder<Input, Output> = delegate.cliStrategy(name, buildStrategy)
 
     /**
      * Creates a functional agent builder using the provided strategy.
