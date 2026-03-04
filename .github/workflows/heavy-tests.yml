@@ -102,6 +102,9 @@ jobs:
         with:
           node-version: 20
 
+      - name: install clis
+        run: npm install -g @openai/codex @anthropic-ai/claude-code
+
       - name: Build cli-agents Docker image
         if: runner.os == 'Linux'
         run: docker build -t cli-agents .github/CliAgentsImage
@@ -145,9 +148,6 @@ jobs:
           OPEN_AI_API_TEST_KEY: ${{ secrets.OPEN_AI_API_TEST_KEY }}
           OPEN_ROUTER_API_TEST_KEY: ${{ secrets.OPEN_ROUTER_API_TEST_KEY }}
         run: | # also install claude and codex here, installing them in a separate step does not work on windows runners for some reason
-          npm install -g @openai/codex @anthropic-ai/claude-code
-          codex --version
-          claude --version
           ./gradlew jvmIntegrationTest --tests "${{ matrix.test-group }}" --continue
 
       - name: Collect reports
