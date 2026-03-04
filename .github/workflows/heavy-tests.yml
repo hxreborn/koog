@@ -102,57 +102,9 @@ jobs:
         with:
           node-version: 20
 
-      - name: Install CLI agents globally for Linux
-        if: runner.os == 'Linux'
-        run: npm install -g @openai/codex @anthropic-ai/claude-code
-
-      - name: Install CLI agents globally for Windows
-        if: runner.os == 'Windows'
-        run: |
-          npm install -g @openai/codex @anthropic-ai/claude-code
-          $npm_prefix = npm config get prefix
-          
-          # On Windows, npm global shims (.cmd files) are usually located directly in the npm prefix folder
-          # or in a subfolder. Let's find exactly where claude.cmd is located.
-          Write-Host "NPM prefix is: $npm_prefix"
-          
-          # Try to find the location of the installed shims
-          $claude_path = Get-ChildItem -Path $npm_prefix -Filter "claude.cmd" -Recurse -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty DirectoryName
-          
-          if ($null -eq $claude_path) {
-              Write-Host "Warning: could not find claude.cmd recursively from $npm_prefix, using prefix directly."
-              $claude_path = $npm_prefix
-          } else {
-              Write-Host "Found claude.cmd at: $claude_path"
-          }
-          
-          # Add the path to GITHUB_PATH for subsequent steps
-          # Using Add-Content for more reliable UTF-8 without BOM on GitHub Actions Windows runners
-          Add-Content -Path $env:GITHUB_PATH -Value "$claude_path"
-          
-          # Update the current process's PATH for the verification step
-          $env:PATH = "$claude_path;" + $env:PATH
-          
-          # Verify
-          Get-Command claude
-          Get-Command codex
-          
-          # Debug: show current PATH and location of commands
-          Write-Host "Current PATH: $env:PATH"
-          (Get-Command claude).Source
-          (Get-Command codex).Source
-
       - name: Build cli-agents Docker image
         if: runner.os == 'Linux'
         run: docker build -t cli-agents .github/CliAgentsImage
-
-      - name: Verify Path for Windows CLI Agents
-        if: runner.os == 'Windows'
-        run: |
-          Write-Host "Verifying PATH in subsequent step..."
-          Write-Host "Current PATH: $env:PATH"
-          Get-Command claude
-          Get-Command codex
 
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v6
@@ -193,9 +145,10 @@ jobs:
           OPEN_AI_API_TEST_KEY: ${{ secrets.OPEN_AI_API_TEST_KEY }}
           OPEN_ROUTER_API_TEST_KEY: ${{ secrets.OPEN_ROUTER_API_TEST_KEY }}
         run: |
-          # Verify
-          Get-Command claude
-          Get-Command codex
+          # install claude and codex for integration tests
+          # installing them in a separate step does not work on windows runners for some reason
+          npm install -g @openai/codex @anthropic-ai/claude-code
+          
           ./gradlew jvmIntegrationTest --tests "${{ matrix.test-group }}" --continue
 
       - name: Collect reports
