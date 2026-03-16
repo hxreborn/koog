@@ -329,9 +329,9 @@ With Koog Persistence you can achieve that by providing a `RollbackToolRegistry`
     ```
     <!--- KNIT example-agent-persistence-java-06.java -->
 
-### Using extension functions
+### Using extension functions (Kotlin)
 
-The Agent Persistence feature provides convenient extension functions for working with checkpoints:
+The Agent Persistence feature provides convenient extension functions in Kotlin for working with checkpoints:
 
 === "Kotlin"
 
@@ -482,7 +482,6 @@ For advanced control, you can directly set the execution point of an agent:
     import ai.koog.agents.snapshot.feature.persistence
     import ai.koog.prompt.message.Message.User
     import ai.koog.serialization.JSONPrimitive
-    
     val customInput = JSONPrimitive("custom-input")
     val customOutput = JSONPrimitive("custom-output")
     val customMessageHistory = emptyList<User>()

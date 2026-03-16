@@ -9,16 +9,19 @@ Koog’s **Streaming API** lets you consume **LLM output incrementally** as a `F
 The stream carries **typed frames** organized into two categories:
 
 **Delta frames** (incremental/partial content):
+
 - `StreamFrame.TextDelta(text: String, index: Int?)` — incremental assistant text
 - `StreamFrame.ReasoningDelta(text: String?, summary: String?, index: Int?)` — incremental reasoning text and summary
 - `StreamFrame.ToolCallDelta(id: String?, name: String?, content: String?, index: Int?)` — partial tool invocation
 
 **Complete frames** (full content):
+
 - `StreamFrame.TextComplete(text: String)` — complete assistant text
 - `StreamFrame.ReasoningComplete(text: List<String>, summary: List<String>?)` — complete reasoning with optional summary
 - `StreamFrame.ToolCallComplete(id: String?, name: String, content: String)` — complete tool invocation
 
 **End marker**:
+
 - `StreamFrame.End(finishReason: String?)` — end-of-stream marker
 
 Helpers are provided to extract plain text, convert frames to `Message.Response` objects, and safely **combine chunked tool calls**.
@@ -45,7 +48,6 @@ The streaming API distinguishes between two types of frames:
 
 Typically, you'll work with delta frames for UI updates and complete frames for extracting final structured data.
 
----
 ## Usage
 
 ### Working with frames directly
@@ -58,7 +60,6 @@ This is the most general approach: react to each frame kind.
     import ai.koog.agents.core.dsl.builder.strategy
     import ai.koog.agents.core.dsl.builder.node
     import ai.koog.prompt.streaming.StreamFrame
-    
     val strategy = strategy<String, String>("strategy_name") {
         val node by node<Unit, Unit> {
     -->
@@ -170,9 +171,9 @@ val strategy = strategy<String, String>("strategy_name") {
 llm.writeSession {
     appendPrompt { user("Solve this complex problem: ...") }
 
-    val stream = requestLLMStreaming()
-    val reasoningSteps = mutableListOf<String>()
-    val summarySteps = mutableListOf<String>()
+        val stream = requestLLMStreaming()
+        val reasoningSteps = mutableListOf<String>()
+        val summarySteps = mutableListOf<String>()
 
     stream.collect { frame ->
         when (frame) {
@@ -202,8 +203,8 @@ llm.writeSession {
 
 ### Working with a raw text stream (derived)
 
-If you have existing streaming parsers that expect `Flow<String>`,
-derive text chunks via `filterTextOnly()` or collect them with `collectText()`.
+If you have existing streaming parsers that expect a stream of text chunks (Kotlin `Flow<String>` or Java reactive streams),
+you can derive text chunks via `filterTextOnly()` or collect them with `collectText()`.
 
 === "Kotlin"
 
@@ -679,26 +680,40 @@ The following sections provide a brief step-by-step guide on how to define a too
 
 ### 3. Register the tool in your agent configuration
 
-<!--- INCLUDE
-import ai.koog.agents.core.agent.AIAgent
-import ai.koog.agents.core.tools.ToolRegistry
-import ai.koog.agents.example.exampleStreamingApi10.BookTool
-import ai.koog.prompt.executor.clients.openai.OpenAIModels
-import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
+=== "Kotlin"
 
--->
-```kotlin
-val toolRegistry = ToolRegistry {
-    tool(BookTool())
-}
+    <!--- INCLUDE
+    import ai.koog.agents.core.agent.AIAgent
+    import ai.koog.agents.core.tools.ToolRegistry
+    import ai.koog.agents.example.exampleStreamingApi10.BookTool
+    import ai.koog.prompt.executor.clients.openai.OpenAIModels
+    import ai.koog.prompt.executor.llms.all.simpleOpenAIExecutor
 
-val runner = AIAgent(
-    promptExecutor = simpleOpenAIExecutor("OPENAI_API_KEY"),
-    llmModel = OpenAIModels.Chat.GPT4o,
-    toolRegistry = toolRegistry
-)
-```
-<!--- KNIT example-streaming-api-12.kt -->
+    -->
+    ```kotlin
+    val toolRegistry = ToolRegistry {
+        tool(BookTool())
+    }
+
+    val runner = AIAgent(
+        promptExecutor = simpleOpenAIExecutor("OPENAI_API_KEY"),
+        llmModel = OpenAIModels.Chat.GPT4o,
+        toolRegistry = toolRegistry
+    )
+    ```
+    <!--- KNIT example-streaming-api-12.kt -->
+
+=== "Java"
+
+    <!--- INCLUDE
+    /**
+    -->
+    <!--- SUFFIX
+    **/
+    -->
+    ```java
+    ```
+    <!--- KNIT example-streaming-api-java-11.java -->
 
 ## Best practices
 
