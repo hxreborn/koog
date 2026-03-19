@@ -63,7 +63,6 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.withContext
 import kotlin.concurrent.atomics.ExperimentalAtomicApi
 import kotlin.jvm.JvmOverloads
@@ -401,7 +400,7 @@ public open class OpenAILLMClient @JvmOverloads constructor(
                         else -> null
                     }
                 }
-            ).filterNotNull().requireEndFrame()
+            ).requireEndFrame()
         } catch (e: Exception) {
             throw LLMClientException(
                 clientName = clientName,
